@@ -1,10 +1,14 @@
 from django_filters import rest_framework as filters
 
-from recipes.models import Recipe, UserRecipeRelation
+from recipes.models import Recipe, Tag, UserRecipeRelation
 
 
 class RecipeFilter(filters.FilterSet):
-    tags = filters.AllValuesMultipleFilter(field_name='tags__slug')
+    tags = filters.ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        queryset=Tag.objects.all(),
+        to_field_name='slug',
+    )
     is_favorited = filters.NumberFilter(method='filter_favorited')
     is_in_shopping_cart = filters.NumberFilter(method='filter_shopping_cart')
 

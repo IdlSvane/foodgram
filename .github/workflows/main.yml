@@ -97,7 +97,10 @@ jobs:
           script: |
             set -e
             cd ~/foodgram/infra
-            printf 'DOCKER_USERNAME=%s\n' '${{ secrets.DOCKER_USERNAME }}' > .env
+            touch .env
+            grep -v '^DOCKER_USERNAME=' .env > .env.tmp || true
+            mv .env.tmp .env
+            printf 'DOCKER_USERNAME=%s\n' '${{ secrets.DOCKER_USERNAME }}' >> .env
             sudo docker compose -f docker-compose.production.yml config --quiet
             sudo docker compose -f docker-compose.production.yml pull
             sudo docker compose -f docker-compose.production.yml up -d --remove-orphans

@@ -5,9 +5,9 @@ services:
     image: postgres:13.10-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: foodgram
-      POSTGRES_USER: foodgram_user
-      POSTGRES_PASSWORD: foodgram_password
+      POSTGRES_DB: ${POSTGRES_DB:-foodgram}
+      POSTGRES_USER: ${POSTGRES_USER:-foodgram_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-foodgram_password}
     volumes:
       - pg_data:/var/lib/postgresql/data/
 
@@ -16,15 +16,15 @@ services:
     image: ${DOCKER_USERNAME}/foodgram_backend:latest
     restart: unless-stopped
     environment:
-      POSTGRES_DB: foodgram
-      POSTGRES_USER: foodgram_user
-      POSTGRES_PASSWORD: foodgram_password
+      POSTGRES_DB: ${POSTGRES_DB:-foodgram}
+      POSTGRES_USER: ${POSTGRES_USER:-foodgram_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-foodgram_password}
       DB_HOST: db
       DB_PORT: 5432
-      SECRET_KEY: foodgram-production-secret-key
+      SECRET_KEY: ${SECRET_KEY:-foodgram-production-secret-key}
       DEBUG: 'False'
-      ALLOWED_HOSTS: cyghost.ddns.net,158.160.214.187,localhost,127.0.0.1,backend
-      CSRF_TRUSTED_ORIGINS: https://cyghost.ddns.net,http://cyghost.ddns.net,http://158.160.214.187
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-cyghost.ddns.net,158.160.214.187,localhost,127.0.0.1,backend}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-https://cyghost.ddns.net,http://cyghost.ddns.net,http://158.160.214.187}
     depends_on:
       - db
     volumes:
