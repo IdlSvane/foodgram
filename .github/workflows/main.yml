@@ -95,7 +95,16 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            set -e
             cd ~/foodgram/infra
             printf 'DOCKER_USERNAME=%s\n' '${{ secrets.DOCKER_USERNAME }}' > .env
+            sudo docker compose -f docker-compose.production.yml config --quiet
             sudo docker compose -f docker-compose.production.yml pull
             sudo docker compose -f docker-compose.production.yml up -d --remove-orphans
+            sleep 20
+            sudo docker compose -f docker-compose.production.yml ps
+            sudo docker compose -f docker-compose.production.yml logs --tail=80 backend
+            sudo docker compose -f docker-compose.production.yml logs --tail=80 nginx
+            sudo docker exec foodgram-proxy nginx -t
+            sudo docker exec foodgram-proxy ls -la /usr/share/nginx/html
+            curl --fail --show-error --verbose http://127.0.0.1/
