@@ -22,5 +22,6 @@ PY
 python manage.py migrate
 python manage.py load_tags
 python manage.py load_ingredients /app/data/ingredients.csv
+python manage.py load_demo_data
 python manage.py collectstatic --noinput
 gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000

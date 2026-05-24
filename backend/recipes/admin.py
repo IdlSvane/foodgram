@@ -29,5 +29,11 @@ class IngredientAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
+@admin.register(RecipeIngredient)
+class RecipeIngredientAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'ingredient', 'amount')
+    search_fields = ('recipe__name', 'ingredient__name')
+
+
 admin.site.register(Tag)
 admin.site.register(UserRecipeRelation)

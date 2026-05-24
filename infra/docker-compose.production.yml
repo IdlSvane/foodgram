@@ -24,6 +24,7 @@ services:
       SECRET_KEY: foodgram-production-secret-key
       DEBUG: 'False'
       ALLOWED_HOSTS: cyghost.ddns.net,158.160.214.187,localhost,127.0.0.1,backend
+      CSRF_TRUSTED_ORIGINS: https://cyghost.ddns.net,http://cyghost.ddns.net,http://158.160.214.187
     depends_on:
       - db
     volumes:
