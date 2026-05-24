@@ -24,7 +24,7 @@ services:
     container_name: foodgram-front
     build: ../frontend
     volumes:
-      - ../frontend/:/app/result_build/
+      - ../frontend/build:/app/result_build/
 
   nginx:
     container_name: foodgram-proxy
