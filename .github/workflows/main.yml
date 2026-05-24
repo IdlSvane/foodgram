@@ -85,7 +85,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: 'infra/docker-compose.production.yml,infra/nginx.conf,docs,data'
+          source: 'infra/docker-compose.production.yml,infra/nginx.conf,infra/nginx.production.conf,docs,data'
           target: '~/foodgram'
 
       - name: Deploy on server
@@ -107,4 +107,4 @@ jobs:
             sudo docker compose -f docker-compose.production.yml logs --tail=80 nginx
             sudo docker exec foodgram-proxy nginx -t
             sudo docker exec foodgram-proxy ls -la /usr/share/nginx/html
-            curl --fail --show-error --verbose http://127.0.0.1/
+            curl --fail --show-error --verbose --insecure https://127.0.0.1/

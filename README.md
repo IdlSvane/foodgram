@@ -70,6 +70,25 @@ docker compose exec backend python manage.py load_tags
 - `SSH_KEY` - приватный SSH-ключ пользователя.
 
 На сервер копируются `infra/docker-compose.production.yml`, `infra/nginx.conf`,
-`docs` и `data`. Compose-файл использует опубликованные образы
+`infra/nginx.production.conf`, `docs` и `data`. Compose-файл использует опубликованные образы
 `${DOCKER_USERNAME}/foodgram_backend:latest` и
 `${DOCKER_USERNAME}/foodgram_frontend:latest`.
+
+## HTTPS
+
+Production-конфигурация использует сертификаты Let's Encrypt из
+`/etc/letsencrypt/live/cyghost.ddns.net/`. Перед первым запуском HTTPS на
+сервере нужно выпустить сертификат:
+
+```bash
+cd ~/foodgram/infra
+sudo docker compose -f docker-compose.production.yml stop nginx
+sudo certbot certonly --standalone -d cyghost.ddns.net
+sudo docker compose -f docker-compose.production.yml up -d
+```
+
+Для автообновления сертификата можно добавить deploy hook:
+
+```bash
+sudo certbot renew --dry-run
+```
