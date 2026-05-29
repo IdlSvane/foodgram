@@ -1,0 +1,93 @@
+{
+  "users": [
+    {
+      "email": "chef@example.com",
+      "username": "chef",
+      "first_name": "Иван",
+      "last_name": "Поваров"
+    },
+    {
+      "email": "baker@example.com",
+      "username": "baker",
+      "first_name": "Анна",
+      "last_name": "Пекарева"
+    }
+  ],
+  "recipes": [
+    {
+      "slug": "vegetable-salad",
+      "author": "chef",
+      "name": "Овощной салат",
+      "text": "Свежий салат для легкого завтрака.",
+      "cooking_time": 10,
+      "tags": ["breakfast"],
+      "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
+      "ingredients": [
+        {
+          "name": "помидоры",
+          "amount": 200
+        },
+        {
+          "name": "огурцы свежие",
+          "amount": 150
+        }
+      ]
+    },
+    {
+      "slug": "homemade-soup",
+      "author": "chef",
+      "name": "Домашний суп",
+      "text": "Простой горячий суп на каждый день.",
+      "cooking_time": 40,
+      "tags": ["lunch"],
+      "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
+      "ingredients": [
+        {
+          "name": "картофель",
+          "amount": 300
+        },
+        {
+          "name": "морковь",
+          "amount": 100
+        }
+      ]
+    },
+    {
+      "slug": "quick-pancakes",
+      "author": "baker",
+      "name": "Быстрые блины",
+      "text": "Мягкие блины к ужину или завтраку.",
+      "cooking_time": 25,
+      "tags": ["breakfast", "dinner"],
+      "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
+      "ingredients": [
+        {
+          "name": "мука",
+          "amount": 250
+        },
+        {
+          "name": "яйца куриные",
+          "amount": 120
+        }
+      ]
+    }
+  ],
+  "subscriptions": [
+    {
+      "user": "baker",
+      "author": "chef"
+    }
+  ],
+  "relations": [
+    {
+      "user": "baker",
+      "recipe": "vegetable-salad",
+      "relation": "favorite"
+    },
+    {
+      "user": "baker",
+      "recipe": "homemade-soup",
+      "relation": "shopping_cart"
+    }
+  ]
+}

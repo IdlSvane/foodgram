@@ -1,5 +1,7 @@
 # Foodgram
 
+[![Foodgram workflow](https://github.com/IdlSvane/foodgram/actions/workflows/main.yml/badge.svg)](https://github.com/IdlSvane/foodgram/actions/workflows/main.yml)
+
 Foodgram - сервис публикации рецептов. Пользователи могут создавать рецепты,
 подписываться на авторов, добавлять рецепты в избранное и список покупок, а
 также скачивать сводный список ингредиентов.
@@ -92,3 +94,8 @@ sudo docker compose -f docker-compose.production.yml up -d
 ```bash
 sudo certbot renew --dry-run
 ```
+
+## Автор
+
+Роман Лебедев - [GitHub](https://github.com/IdlSvane),
+[email](mailto:Rlebedev02@yandex.ru).

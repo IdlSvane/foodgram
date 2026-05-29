@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import Ingredient, Recipe, RecipeIngredient, Tag
-from .models import UserRecipeRelation
+from recipes.models import (Ingredient, Recipe, RecipeIngredient, Tag,
+                            UserRecipeRelation)
 
 
 class RecipeIngredientInline(admin.TabularInline):
@@ -29,11 +29,21 @@ class IngredientAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug')
+    search_fields = ('name', 'slug')
+    prepopulated_fields = {'slug': ('name',)}
+
+
 @admin.register(RecipeIngredient)
 class RecipeIngredientAdmin(admin.ModelAdmin):
     list_display = ('recipe', 'ingredient', 'amount')
     search_fields = ('recipe__name', 'ingredient__name')
 
 
-admin.site.register(Tag)
-admin.site.register(UserRecipeRelation)
+@admin.register(UserRecipeRelation)
+class UserRecipeRelationAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe', 'relation')
+    list_filter = ('relation',)
+    search_fields = ('user__email', 'user__username', 'recipe__name')

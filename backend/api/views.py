@@ -1,77 +1,38 @@
+from io import BytesIO
+
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
-from django.http import HttpResponse
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import mixins, permissions, status, viewsets
-from rest_framework.authtoken.models import Token
+from djoser.views import UserViewSet as DjoserUserViewSet
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
-from recipes.models import UserRecipeRelation
+from api.filters import RecipeFilter
+from api.permissions import IsAuthorOrReadOnly
+from api.serializers import (AvatarSerializer, IngredientSerializer,
+                             RecipeMinifiedSerializer, RecipeReadSerializer,
+                             RecipeWriteSerializer, SubscriptionSerializer,
+                             TagSerializer)
+from recipes.models import (Ingredient, Recipe, RecipeIngredient, Tag,
+                            UserRecipeRelation)
 from users.models import Subscription
-
-from .filters import RecipeFilter
-from .permissions import IsAuthorOrReadOnly
-from .serializers import AvatarSerializer, IngredientSerializer
-from .serializers import PasswordSerializer, RecipeMinifiedSerializer
-from .serializers import RecipeReadSerializer, RecipeWriteSerializer
-from .serializers import SubscriptionSerializer, TagSerializer
-from .serializers import TokenCreateSerializer, UserCreateSerializer
-from .serializers import UserSerializer, get_token_for_user
-
 
 User = get_user_model()
 
 
-class UserViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
-                  mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class UserViewSet(DjoserUserViewSet):
     queryset = User.objects.all().order_by('id')
 
     def get_serializer_class(self):
-        if self.action == 'create':
-            return UserCreateSerializer
         if self.action in ('subscriptions', 'subscribe'):
             return SubscriptionSerializer
         if self.action == 'avatar':
             return AvatarSerializer
-        return UserSerializer
-
-    @action(
-        detail=False,
-        methods=('get',),
-        permission_classes=(permissions.IsAuthenticated,),
-    )
-    def me(self, request):
-        serializer = UserSerializer(request.user, context={'request': request})
-        return Response(serializer.data)
-
-    @action(
-        detail=False,
-        methods=('post',),
-        permission_classes=(permissions.IsAuthenticated,),
-    )
-    def set_password(self, request):
-        serializer = PasswordSerializer(
-            data=request.data,
-            context={'request': request},
-        )
-        serializer.is_valid(raise_exception=True)
-        request.user.set_password(serializer.validated_data['new_password'])
-        request.user.save()
-        Token.objects.filter(user=request.user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(
-        detail=False,
-        methods=('post',),
-        permission_classes=(permissions.AllowAny,),
-    )
-    def reset_password(self, request):
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return super().get_serializer_class()
 
     @action(
         detail=False,
@@ -257,14 +218,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.IsAuthenticated,),
     )
     def download_shopping_cart(self, request):
-        ingredients = RecipeIngredient.objects.filter(
-            recipe__user_relations__user=request.user,
+        shopping_list = self.get_shopping_list(request.user)
+        file = BytesIO(shopping_list.encode('utf-8'))
+        return FileResponse(
+            file,
+            as_attachment=True,
+            filename='shopping-list.txt',
+            content_type='text/plain; charset=utf-8',
+        )
+
+    def get_shopping_cart_ingredients(self, user):
+        return RecipeIngredient.objects.filter(
+            recipe__user_relations__user=user,
             recipe__user_relations__relation=UserRecipeRelation.SHOPPING_CART,
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit',
         ).annotate(total=Sum('amount')).order_by('ingredient__name')
 
+    def get_shopping_list(self, user):
+        ingredients = self.get_shopping_cart_ingredients(user)
         lines = ['Список покупок Foodgram', '']
         lines.extend(
             (
@@ -274,35 +247,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
             for item in ingredients
         )
-        response = HttpResponse(
-            '\n'.join(lines),
-            content_type='text/plain; charset=utf-8',
-        )
-        response['Content-Disposition'] = (
-            'attachment; filename="shopping-list.txt"'
-        )
-        return response
+        return '\n'.join(lines)
 
     @action(detail=True, methods=('get',), url_path='get-link')
     def get_link(self, request, pk=None):
         recipe = self.get_object()
         path = reverse('recipe-detail', kwargs={'pk': recipe.pk})
         return Response({'short-link': request.build_absolute_uri(path)})
-
-
-class TokenLoginView(APIView):
-    permission_classes = (permissions.AllowAny,)
-
-    def post(self, request):
-        serializer = TokenCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        token = get_token_for_user(serializer.validated_data['user'])
-        return Response({'auth_token': token})
-
-
-class TokenLogoutView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def post(self, request):
-        Token.objects.filter(user=request.user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)

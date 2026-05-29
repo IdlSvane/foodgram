@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand
 
+from constants import DEFAULT_INGREDIENTS_PATH
 from recipes.models import Ingredient
 
 
@@ -13,7 +14,7 @@ class Command(BaseCommand):
         parser.add_argument(
             'path',
             nargs='?',
-            default='/app/data/ingredients.csv',
+            default=DEFAULT_INGREDIENTS_PATH,
         )
 
     def handle(self, *args, **options):

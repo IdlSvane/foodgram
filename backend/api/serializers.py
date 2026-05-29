@@ -1,28 +1,25 @@
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import get_user_model
 from django.db import transaction
+from djoser.serializers import UserSerializer as DjoserUserSerializer
 from rest_framework import serializers
-from rest_framework.authtoken.models import Token
 
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
-from recipes.models import UserRecipeRelation
+from api.fields import Base64ImageField
+from constants import MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT
+from recipes.models import (Ingredient, Recipe, RecipeIngredient, Tag,
+                            UserRecipeRelation)
 from users.models import Subscription
-
-from .fields import Base64ImageField
-
 
 User = get_user_model()
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(DjoserUserSerializer):
     is_subscribed = serializers.SerializerMethodField()
     avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = (
+        fields = DjoserUserSerializer.Meta.fields + (
             'email',
-            'id',
-            'username',
             'first_name',
             'last_name',
             'is_subscribed',
@@ -46,73 +43,6 @@ class UserSerializer(serializers.ModelSerializer):
             return None
         url = obj.avatar.url
         return request.build_absolute_uri(url) if request else url
-
-
-class UserCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = (
-            'email',
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'password',
-        )
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def validate_username(self, value):
-        if value.lower() == 'me':
-            raise serializers.ValidationError(
-                'Нельзя использовать me в качестве username.'
-            )
-        return value
-
-    def create(self, validated_data):
-        password = validated_data.pop('password')
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-        return user
-
-
-class TokenCreateSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField()
-
-    def validate(self, attrs):
-        user = authenticate(
-            username=attrs['email'],
-            password=attrs['password'],
-        )
-        if user is None:
-            try:
-                username = User.objects.get(email=attrs['email']).username
-            except User.DoesNotExist:
-                raise serializers.ValidationError(
-                    {'non_field_errors': ['Неверные учетные данные.']}
-                )
-            user = authenticate(
-                username=username,
-                password=attrs['password'],
-            )
-        if user is None:
-            raise serializers.ValidationError(
-                {'non_field_errors': ['Неверные учетные данные.']}
-            )
-        attrs['user'] = user
-        return attrs
-
-
-class PasswordSerializer(serializers.Serializer):
-    current_password = serializers.CharField()
-    new_password = serializers.CharField()
-
-    def validate_current_password(self, value):
-        user = self.context['request'].user
-        if not user.check_password(value):
-            raise serializers.ValidationError('Неверный пароль.')
-        return value
 
 
 class AvatarSerializer(serializers.ModelSerializer):
@@ -219,7 +149,10 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 class RecipeIngredientWriteSerializer(serializers.Serializer):
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
-    amount = serializers.IntegerField(min_value=1)
+    amount = serializers.IntegerField(
+        min_value=MIN_INGREDIENT_AMOUNT,
+        max_value=32767,
+    )
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
@@ -229,7 +162,10 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         many=True,
     )
     image = Base64ImageField(required=True)
-    cooking_time = serializers.IntegerField(min_value=1)
+    cooking_time = serializers.IntegerField(
+        min_value=MIN_COOKING_TIME,
+        max_value=32767,
+    )
 
     class Meta:
         model = Recipe
@@ -255,7 +191,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
         if not tags:
             raise serializers.ValidationError({'tags': ['Добавьте теги.']})
-        if len({tag.id for tag in tags}) != len(tags):
+        if len(set(tags)) != len(tags):
             raise serializers.ValidationError(
                 {'tags': ['Теги не должны повторяться.']}
             )
@@ -290,9 +226,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+        instance = super().update(instance, validated_data)
         instance.tags.set(tags)
         instance.recipe_ingredients.all().delete()
         self.create_recipe_ingredients(instance, ingredients)
@@ -311,14 +245,12 @@ class SubscriptionSerializer(UserSerializer):
         recipes = obj.recipes.all()
         limit = request.query_params.get('recipes_limit') if request else None
         if limit:
-            recipes = recipes[: int(limit)]
+            try:
+                recipes = recipes[: int(limit)]
+            except ValueError:
+                pass
         return RecipeMinifiedSerializer(
             recipes,
             many=True,
             context=self.context,
         ).data
-
-
-def get_token_for_user(user):
-    token, _ = Token.objects.get_or_create(user=user)
-    return token.key
