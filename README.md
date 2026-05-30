@@ -1,10 +1,12 @@
 # Foodgram
 
-[![Foodgram workflow](https://github.com/IdlSvane/foodgram/actions/workflows/main.yml/badge.svg)](https://github.com/IdlSvane/foodgram/actions/workflows/main.yml)
-
 Foodgram - сервис публикации рецептов. Пользователи могут создавать рецепты,
 подписываться на авторов, добавлять рецепты в избранное и список покупок, а
 также скачивать сводный список ингредиентов.
+
+Проект доступен по адресу [https://cyghost.ddns.net](https://cyghost.ddns.net).
+Документация API доступна по адресу
+[https://cyghost.ddns.net/api/docs/](https://cyghost.ddns.net/api/docs/).
 
 ## Стек
 
@@ -21,8 +23,20 @@ Foodgram - сервис публикации рецептов. Пользова�
 cd infra
 ```
 
-2. При необходимости измените переменные окружения в `.env`. Пример лежит в
-   `.env.example`.
+2. Создайте файл `.env` в папке `infra` и заполните переменные окружения:
+
+```env
+POSTGRES_DB=foodgram
+POSTGRES_USER=foodgram_user
+POSTGRES_PASSWORD=foodgram_password
+DB_HOST=db
+DB_PORT=5432
+SECRET_KEY=change-me
+DEBUG=False
+ALLOWED_HOSTS=localhost,127.0.0.1,cyghost.ddns.net,158.160.214.187
+CSRF_TRUSTED_ORIGINS=http://localhost,http://127.0.0.1,https://cyghost.ddns.net
+DOCKER_USERNAME=your_dockerhub_username
+```
 
 3. Запустите проект:
 

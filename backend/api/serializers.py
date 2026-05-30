@@ -4,6 +4,7 @@ from djoser.serializers import UserSerializer as DjoserUserSerializer
 from rest_framework import serializers
 
 from api.fields import Base64ImageField
+from constants import MAX_POSITIVE_SMALL_INTEGER
 from constants import MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT
 from recipes.models import (Ingredient, Recipe, RecipeIngredient, Tag,
                             UserRecipeRelation)
@@ -84,16 +85,9 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeMinifiedSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
-
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
-
-    def get_image(self, obj):
-        request = self.context.get('request')
-        url = obj.image.url
-        return request.build_absolute_uri(url) if request else url
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
@@ -106,7 +100,6 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
@@ -141,17 +134,12 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     def get_is_in_shopping_cart(self, obj):
         return self.get_relation(obj, UserRecipeRelation.SHOPPING_CART)
 
-    def get_image(self, obj):
-        request = self.context.get('request')
-        url = obj.image.url
-        return request.build_absolute_uri(url) if request else url
-
 
 class RecipeIngredientWriteSerializer(serializers.Serializer):
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
     amount = serializers.IntegerField(
         min_value=MIN_INGREDIENT_AMOUNT,
-        max_value=32767,
+        max_value=MAX_POSITIVE_SMALL_INTEGER,
     )
 
 
@@ -164,7 +152,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=True)
     cooking_time = serializers.IntegerField(
         min_value=MIN_COOKING_TIME,
-        max_value=32767,
+        max_value=MAX_POSITIVE_SMALL_INTEGER,
     )
 
     class Meta:
@@ -177,6 +165,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
+
+    def validate_image(self, value):
+        if not value:
+            raise serializers.ValidationError('Добавьте изображение.')
+        return value
 
     def validate(self, attrs):
         ingredients = attrs.get('ingredients')
