@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
-from django.urls import reverse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import permissions, status, viewsets
@@ -60,7 +59,9 @@ class UserViewSet(DjoserUserViewSet):
         permission_classes=(permissions.IsAuthenticated,),
     )
     def subscriptions(self, request):
-        authors = User.objects.filter(subscribers__user=request.user)
+        authors = User.objects.filter(
+            subscribers__user=request.user,
+        ).order_by('id')
         page = self.paginate_queryset(authors)
         serializer = SubscriptionSerializer(
             page,
@@ -74,7 +75,7 @@ class UserViewSet(DjoserUserViewSet):
         methods=('post', 'delete'),
         permission_classes=(permissions.IsAuthenticated,),
     )
-    def subscribe(self, request, pk=None):
+    def subscribe(self, request, *args, **kwargs):
         author = self.get_object()
         if request.method == 'DELETE':
             deleted, _ = Subscription.objects.filter(
@@ -250,7 +251,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return '\n'.join(lines)
 
     @action(detail=True, methods=('get',), url_path='get-link')
-    def get_link(self, request, pk=None):
+    def get_link(self, request, *args, **kwargs):
         recipe = self.get_object()
-        path = reverse('recipe-detail', kwargs={'pk': recipe.pk})
+        path = f'/recipes/{recipe.pk}'
         return Response({'short-link': request.build_absolute_uri(path)})
